@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Mix Log</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Saira+Condensed:wght@500;700&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<link rel="stylesheet" href="style.css">
+<script src="https://accounts.google.com/gsi/client" async></script>
+<script src="config.js"></script>
+<script src="app.js" defer></script>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="topbar">
+      <h1>Mix Log <span class="arrow">→</span></h1>
+      <div class="who" id="who" hidden>
+        <span class="sync" id="sync">—</span>
+        <button class="ghost" id="signout">ログアウト</button>
+      </div>
+    </div>
+    <p class="lede">Google フォトからrekordboxの画面写真を選ぶと、どの曲からどの曲へつないだかを読み取って記録します。チャンネルフェーダーが上がっている側を「つないだ先（IN）」、下がっている側を「元の曲（OUT）」と判定します。</p>
+  </header>
+
+  <section class="signin" id="signin">
+    <strong>Googleアカウントでログイン</strong>
+    <p class="note" style="margin:0">Google フォトの写真選択と、記録のGoogleドライブ保存（アプリ専用の見えない領域）に使います。</p>
+    <button class="primary" id="signinBtn">ログイン</button>
+    <p class="note err" id="signinErr" hidden></p>
+  </section>
+
+  <section id="addSec" style="display:flex;flex-direction:column;gap:10px" hidden>
+    <div class="add">
+      <button class="big" id="pickBtn"><strong>Google フォトから選ぶ</strong><span>新しいタブで写真を選び、終わると自動で戻ります</span></button>
+      <label class="drop" id="drop">
+        <strong>端末の写真を選ぶ</strong>
+        <span>ドロップもOK。時刻はEXIF→ファイル名の順で取得</span>
+        <input type="file" id="file" accept="image/jpeg,image/png,image/webp" multiple>
+      </label>
+    </div>
+    <p class="note" id="pickNote" hidden></p>
+    <div class="qbar" id="qbar" hidden>
+      <span class="note" id="qcount"></span>
+      <button class="primary" id="saveAll">読み取り済みをすべて記録</button>
+    </div>
+    <div class="queue" id="queue"></div>
+  </section>
+
+  <section style="display:flex;flex-direction:column;gap:12px">
+    <div class="toolbar">
+      <h2>セットリスト</h2>
+      <div class="row">
+        <button id="slCopy">テキストをコピー</button>
+        <button id="slCsv">CSV</button>
+        <button id="slJson">JSON</button>
+      </div>
+    </div>
+    <p class="note" style="margin:0">撮影時刻の順につなぎを並べて曲順を組み立てます。60分以上あいたところで別のセットとして区切ります。</p>
+    <div class="sessions" id="sessions"></div>
+    <div class="range">
+      <label for="slFrom">開始</label><input type="datetime-local" id="slFrom">
+      <label for="slTo">終了</label><input type="datetime-local" id="slTo">
+    </div>
+    <p class="note" id="slSummary" style="margin:0"></p>
+    <div id="slOut" class="out-text" hidden></div>
+    <ol class="setlist" id="setlist"></ol>
+  </section>
+
+  <section style="display:flex;flex-direction:column;gap:14px">
+    <div class="toolbar">
+      <h2>記録</h2>
+      <div class="row">
+        <button id="copyAll">テキストをコピー</button>
+        <button id="csv">CSV</button>
+        <button id="json">JSON</button>
+        <button type="button" id="importBtn">JSONを読み込む</button><input type="file" id="importFile" accept="application/json,.json" hidden>
+      </div>
+    </div>
+    <p class="note" id="storeNote"></p>
+    <div id="textOut" class="out-text" hidden></div>
+    <div id="log"></div>
+  </section>
+</div>
+</body>
+</html>

@@ -1,0 +1,16 @@
+name = "rekordbox-mixlog"
+main = "src/index.js"
+compatibility_date = "2026-06-01"
+
+[vars]
+# Google Cloud の OAuth クライアントID（ウェブアプリ）
+GOOGLE_CLIENT_ID = "xxxxxxxx.apps.googleusercontent.com"
+# 使ってよいGoogleアカウント（カンマ区切り）
+ALLOWED_EMAILS = "gateofzen@gmail.com"
+# アプリを置くオリジン（ローカル確認用を足すならカンマ区切り）
+ALLOWED_ORIGIN = "https://gateofzen.github.io"
+# 読み取りに使うClaudeのモデル
+MODEL = "claude-sonnet-5-5"
+
+# ANTHROPIC_API_KEY は vars に書かず、次のコマンドで secret として登録する:
+#   npx wrangler secret put ANTHROPIC_API_KEY
