@@ -1,6 +1,8 @@
 name = "rekordbox-mixlog"
 main = "src/index.js"
 compatibility_date = "2026-06-01"
+workers_dev = true
+preview_urls = false
 
 [vars]
 # Google Cloud の OAuth クライアントID（ウェブアプリ）
