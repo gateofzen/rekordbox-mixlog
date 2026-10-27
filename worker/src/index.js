@@ -10,9 +10,10 @@
 const PROMPT = `This is a phone photo of a laptop screen running rekordbox (Pioneer DJ software) in 2-deck PERFORMANCE mode. The DJ took it right AFTER finishing a successful transition from one track to the other.
 
 Read both decks:
-- Deck 1 is the LEFT deck, deck 2 the RIGHT deck. Each deck header shows the track title on the first line, the artist under it (often truncated with "..."), then the track's original BPM and musical key (e.g. "128.86 Abm").
+- Deck 1 is the LEFT deck, deck 2 the RIGHT deck. Each deck header shows the track title on the first line, the artist under it (often truncated with "..."), then the track's original BPM (e.g. "128.86"; ignore the musical key next to it).
 - If a title or artist is truncated, check the track list below the decks: a highlighted row may show more of it. Copy text as displayed; never invent missing words. Keep "..." only if you truly cannot see the rest.
 - The large number in each jog circle (e.g. 148.00) is the current playing tempo.
+- ALBUM: the deck headers do not show the album. Find each deck's track in the track list (browser) at the bottom of the screen — match by title and artist; the highlighted row is usually one of the loaded tracks — and read its アルバム (Album) column. Leave album empty if that track's row is not visible. Never take the album from a different track's row.
 
 Decide the order from the CHANNEL FADERS: the two vertical faders in the center mixer strip, just below the CUE buttons under the EQ knobs (left = deck 1, right = deck 2). Estimate each fader cap position from 0 (bottom) to 1 (top).
 - The deck whose fader is UP is the track the DJ mixed INTO (the "to" track, played second).
@@ -25,11 +26,11 @@ const deckSchema = {
   type: "object",
   properties: {
     title: { type: "string" }, artist: { type: "string" },
+    album: { type: "string", description: "Album column of this track's row in the track list, or empty" },
     bpm: { type: "string", description: "track's original BPM as displayed, e.g. 128.86" },
-    key: { type: "string", description: "musical key as displayed, e.g. Abm" },
     fader: { type: "number", description: "channel fader cap position, 0 = bottom, 1 = top" },
   },
-  required: ["title", "artist", "bpm", "key", "fader"],
+  required: ["title", "artist", "album", "bpm", "fader"],
   additionalProperties: false,
 };
 const READ_SCHEMA = {

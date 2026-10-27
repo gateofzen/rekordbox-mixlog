@@ -1,0 +1,17 @@
+{
+  "name": "Mix Log",
+  "short_name": "Mix Log",
+  "description": "rekordboxの画面写真から、つないだ曲とセットリストを記録する",
+  "id": "/rekordbox-mixlog/",
+  "start_url": "/rekordbox-mixlog/",
+  "scope": "/rekordbox-mixlog/",
+  "display": "standalone",
+  "background_color": "#0f1117",
+  "theme_color": "#0f1117",
+  "lang": "ja",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

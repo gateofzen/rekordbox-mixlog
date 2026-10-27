@@ -407,19 +407,20 @@
     drawJob(job);
   }
   const num = v => (typeof v === "number" && isFinite(v) ? Math.max(0, Math.min(1, v)) : null);
-  const pick = (d, deck) => ({ title: String(d.title || ""), artist: String(d.artist || ""), bpm: String(d.bpm || ""), key: String(d.key || ""), deck });
+  const pick = (d, deck) => ({ title: String(d.title || ""), artist: String(d.artist || ""), album: String(d.album || ""), bpm: String(d.bpm || ""), deck });
 
   function trkFields(side, t, jid) {
     return `<div class="trk ${side}">
       <span class="tag">${side === "from" ? "OUT · DECK " + t.deck : "IN · DECK " + t.deck}</span>
       <input class="t" id="${jid}-${side}-title" value="${esc(t.title)}" placeholder="曲名" aria-label="曲名">
       <input id="${jid}-${side}-artist" value="${esc(t.artist)}" placeholder="アーティスト" aria-label="アーティスト">
-      <div class="mini"><input id="${jid}-${side}-bpm" value="${esc(t.bpm)}" placeholder="BPM" aria-label="BPM"><input id="${jid}-${side}-key" value="${esc(t.key)}" placeholder="Key" aria-label="キー"></div>
+      <input id="${jid}-${side}-album" value="${esc(t.album)}" placeholder="アルバム" aria-label="アルバム">
+      <div class="mini"><input id="${jid}-${side}-bpm" value="${esc(t.bpm)}" placeholder="BPM" aria-label="BPM"></div>
     </div>`;
   }
   function readFields(jid, side, deck) {
     const v = k => document.getElementById(`${jid}-${side}-${k}`)?.value.trim() || "";
-    return { title: v("title"), artist: v("artist"), bpm: v("bpm"), key: v("key"), deck };
+    return { title: v("title"), artist: v("artist"), album: v("album"), bpm: v("bpm"), deck };
   }
   const tlabel = job => `${fmtDate(job.shotAt)} <span class="pill${job.timeSrc === "更新日時" ? " low" : ""}" title="撮影時刻の取得元">${job.timeSrc}</span>`;
 
@@ -492,7 +493,7 @@
   let confirmId = null, editId = null;
 
   function entryHtml(r) {
-    const m = t => [t.bpm, t.key].filter(Boolean).join(" · ");
+    const m = t => [t.album ? "(" + t.album + ")" : "", t.bpm ? t.bpm + " BPM" : ""].filter(Boolean).join("  ");
     if (editId === r.id) {
       return `<div class="entry" data-id="${r.id}"><div class="time">${hhmm(r.shotAt)}</div>
         <div class="mix" style="gap:8px">${trkFields("from", r.from, "e" + r.id)}${trkFields("to", r.to, "e" + r.id)}
@@ -559,7 +560,7 @@
     const [s, l] = x.length < y.length ? [x, y] : [y, x];
     return s.length >= 6 && l.startsWith(s);
   }
-  const better = (a, b) => ({ ...a, title: (b.title || "").length > (a.title || "").length ? b.title : a.title, artist: (b.artist || "").length > (a.artist || "").length ? b.artist : a.artist, bpm: a.bpm || b.bpm, key: a.key || b.key });
+  const better = (a, b) => ({ ...a, title: (b.title || "").length > (a.title || "").length ? b.title : a.title, artist: (b.artist || "").length > (a.artist || "").length ? b.artist : a.artist, album: (b.album || "").length > (a.album || "").length ? b.album : a.album, bpm: a.bpm || b.bpm });
   function sessionsOf(list) {
     const sorted = [...list].sort((a, b) => a.shotAt - b.shotAt), out = [];
     for (const r of sorted) {
@@ -614,7 +615,7 @@
     $("#setlist").hidden = !slItems.length;
     $("#setlist").innerHTML = slItems.map(i => i.gap
       ? `<li class="gap">― ここで記録が途切れています ―</li>`
-      : `<li><span class="no">${pad(++no)}</span><span class="tm">${i.at ? hhmm(i.at) : "start"}</span><span class="tt"><b>${esc(i.title || "?")}</b><span>${esc(i.artist)}</span></span><span class="bk">${esc([i.bpm, i.key].filter(Boolean).join(" · "))}</span></li>`
+      : `<li><span class="no">${pad(++no)}</span><span class="tm">${i.at ? hhmm(i.at) : "start"}</span><span class="tt"><b>${esc(i.title || "?")}</b><span>${esc(i.artist)}</span>${i.album ? `<span>(${esc(i.album)})</span>` : ""}</span><span class="bk">${i.bpm ? esc(i.bpm) + " BPM" : ""}</span></li>`
     ).join("");
   }
   $("#sessions").addEventListener("click", e => {
@@ -641,20 +642,20 @@
   }
   const stamp = ts => { const d = new Date(ts); return `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}`; };
 
+  // 曲名 / アーティスト名 (アルバム名) [bpm]
+  const setLine = i => `${i.title || "?"}${i.artist ? " / " + i.artist : ""}${i.album ? " (" + i.album + ")" : ""}${i.bpm ? " [" + i.bpm + "]" : ""}`;
   function slText() {
-    let no = 0;
-    return `Setlist ${fmtDate(slFrom)} – ${hhmm(slTo)}\n\n` + slItems.map(i => i.gap ? "   ---" :
-      `${pad(++no)}. ${i.at ? hhmm(i.at) : "start"}  ${trackLine(i)}${i.bpm || i.key ? "  [" + [i.bpm, i.key].filter(Boolean).join(" ") + "]" : ""}`).join("\n");
+    return slItems.map(i => i.gap ? "---" : setLine(i)).join("\n");
   }
   function slCsv() {
     let no = 0;
-    const rows = slItems.map(i => i.gap ? ["", "", "（途切れ）", "", "", ""] : [++no, i.at ? fmtDate(i.at) : "", i.title, i.artist, i.bpm, i.key]);
-    return "﻿" + [["No", "IN時刻", "曲名", "アーティスト", "BPM", "キー"], ...rows].map(r => r.map(csvCell).join(",")).join("\r\n");
+    const rows = slItems.map(i => i.gap ? ["", "", "（途切れ）", "", "", "", ""] : [++no, i.at ? fmtDate(i.at) : "", i.title, i.artist, i.album || "", i.bpm, setLine(i)]);
+    return "﻿" + [["No", "IN時刻", "曲名", "アーティスト", "アルバム", "BPM", "表記"], ...rows].map(r => r.map(csvCell).join(",")).join("\r\n");
   }
   function slJson() {
     let no = 0;
     return JSON.stringify({ from: fmtDate(slFrom), to: fmtDate(slTo), tracks: slItems.map(i => i.gap ? { break: true } :
-      { no: ++no, in_at: i.at ? fmtDate(i.at) : null, title: i.title, artist: i.artist, bpm: i.bpm, key: i.key }) }, null, 2);
+      { no: ++no, in_at: i.at ? fmtDate(i.at) : null, title: i.title, artist: i.artist, album: i.album || "", bpm: i.bpm, line: setLine(i) }) }, null, 2);
   }
   const slName = ext => { const d = new Date(slFrom); return `setlist_${stamp(slFrom)}_${pad(d.getHours())}${pad(d.getMinutes())}.${ext}`; };
   $("#slCsv").onclick = () => slItems.length && download(slName("csv"), slCsv(), "text/csv");
@@ -669,8 +670,8 @@
     }).join("\n");
   }
   function asCsv() {
-    const h = ["日時", "OUT曲名", "OUTアーティスト", "OUT BPM", "OUTキー", "IN曲名", "INアーティスト", "IN BPM", "INキー", "プレイ中BPM", "メモ", "ファイル名"];
-    const rows = ordered().map(r => [fmtDate(r.shotAt), r.from.title, r.from.artist, r.from.bpm, r.from.key, r.to.title, r.to.artist, r.to.bpm, r.to.key, r.playingBpm, r.memo, r.fileName]);
+    const h = ["日時", "OUT曲名", "OUTアーティスト", "OUTアルバム", "OUT BPM", "IN曲名", "INアーティスト", "INアルバム", "IN BPM", "プレイ中BPM", "メモ", "ファイル名"];
+    const rows = ordered().map(r => [fmtDate(r.shotAt), r.from.title, r.from.artist, r.from.album || "", r.from.bpm, r.to.title, r.to.artist, r.to.album || "", r.to.bpm, r.playingBpm, r.memo, r.fileName]);
     return "﻿" + [h, ...rows].map(r => r.map(csvCell).join(",")).join("\r\n");
   }
   const asJson = () => JSON.stringify(ordered().map(({ thumb, ...r }) => r), null, 2);
@@ -716,6 +717,18 @@
     $("#signinErr").textContent = "config.js に GOOGLE_CLIENT_ID と WORKER_URL を設定してください。";
     $("#signinErr").hidden = false;
   }
+  // PWA: offline shell + install button
+  if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(() => {});
+  let installEvt = null;
+  window.addEventListener("beforeinstallprompt", e => { e.preventDefault(); installEvt = e; $("#installBtn").hidden = false; });
+  window.addEventListener("appinstalled", () => { installEvt = null; $("#installBtn").hidden = true; });
+  $("#installBtn").onclick = async () => {
+    if (!installEvt) return;
+    installEvt.prompt();
+    await installEvt.userChoice.catch(() => {});
+    installEvt = null; $("#installBtn").hidden = true;
+  };
+
   loadCache();
   $("#storeNote").textContent = live().length ? "この端末に残っている記録を表示しています。ログインするとGoogleドライブと同期します。" : "";
   render();
