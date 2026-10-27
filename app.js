@@ -645,7 +645,8 @@
   // 曲名 / アーティスト名 (アルバム名) [bpm]
   const setLine = i => `${i.title || "?"}${i.artist ? " / " + i.artist : ""}${i.album ? " (" + i.album + ")" : ""}${i.bpm ? " [" + i.bpm + "]" : ""}`;
   function slText() {
-    return slItems.map(i => i.gap ? "---" : setLine(i)).join("\n");
+    let no = 0;
+    return slItems.map(i => i.gap ? "---" : `${pad(++no)}. ${i.at ? hhmm(i.at) : "start"} ${setLine(i)}`).join("\n");
   }
   function slCsv() {
     let no = 0;
