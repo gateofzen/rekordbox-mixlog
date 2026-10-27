@@ -19,14 +19,35 @@ Decide the order from the CHANNEL FADERS: the two vertical faders in the center 
 - The deck whose fader is DOWN is the track mixed OUT of (the "from" track, played first).
 - If both faders look equally up, use the horizontal crossfader and which deck is MASTER as secondary clues, and lower your confidence.
 
-Reply with only this JSON, no other text:
-{"deck1":{"title":"","artist":"","bpm":"","key":"","fader":0.0},
- "deck2":{"title":"","artist":"","bpm":"","key":"","fader":0.0},
- "playing_bpm":"",
- "from_deck":1,"to_deck":2,
- "confidence":"high|medium|low",
- "reason":"one short sentence in Japanese explaining the fader judgement"}
-Use empty strings for anything unreadable.`;
+Record your reading with the record_mix tool. Use empty strings for anything unreadable. "reason" is one short sentence in Japanese explaining the fader judgement.`;
+
+const deckSchema = {
+  type: "object",
+  properties: {
+    title: { type: "string" }, artist: { type: "string" },
+    bpm: { type: "string", description: "track's original BPM as displayed, e.g. 128.86" },
+    key: { type: "string", description: "musical key as displayed, e.g. Abm" },
+    fader: { type: "number", description: "channel fader cap position, 0 = bottom, 1 = top" },
+  },
+  required: ["title", "artist", "bpm", "key", "fader"],
+};
+const READ_TOOL = {
+  name: "record_mix",
+  description: "Record what the rekordbox screen shows and which deck was mixed out of and into.",
+  input_schema: {
+    type: "object",
+    properties: {
+      deck1: deckSchema,
+      deck2: deckSchema,
+      playing_bpm: { type: "string", description: "current playing tempo shown in the jog circle" },
+      from_deck: { type: "integer", enum: [1, 2], description: "deck whose fader is DOWN (mixed out of)" },
+      to_deck: { type: "integer", enum: [1, 2], description: "deck whose fader is UP (mixed into)" },
+      confidence: { type: "string", enum: ["high", "medium", "low"] },
+      reason: { type: "string" },
+    },
+    required: ["deck1", "deck2", "playing_bpm", "from_deck", "to_deck", "confidence", "reason"],
+  },
+};
 
 const tokenCache = new Map(); // token -> expiry ms (verified)
 
@@ -90,7 +111,9 @@ export default {
           },
           body: JSON.stringify({
             model: env.MODEL || "claude-sonnet-5-5",
-            max_tokens: 1024,
+            max_tokens: 2048,
+            tools: [READ_TOOL],
+            tool_choice: { type: "tool", name: READ_TOOL.name },
             messages: [{
               role: "user",
               content: [
@@ -102,9 +125,11 @@ export default {
         });
         const out = await res.json().catch(() => ({}));
         if (!res.ok) return json({ error: "claude_error", status: res.status, detail: out?.error?.message || "" }, 502);
+        const call = (out.content || []).find(c => c.type === "tool_use" && c.name === READ_TOOL.name);
         const text = (out.content || []).filter(c => c.type === "text").map(c => c.text).join("");
-        const parsed = parseJson(text);
-        if (!parsed) return json({ error: "invalid_json", raw: text.slice(0, 2000) }, 502);
+        const parsed = call?.input && typeof call.input === "object" ? call.input : parseJson(text);
+        if (!parsed || !parsed.deck1 || !parsed.deck2)
+          return json({ error: "invalid_json", detail: `stop_reason=${out.stop_reason || "?"}`, raw: (text || JSON.stringify(call?.input || "")).slice(0, 2000) }, 502);
         return json({ ok: true, result: parsed });
       }
 

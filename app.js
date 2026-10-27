@@ -196,7 +196,10 @@
       throw { error: "network" };
     }
     const data = await r.json().catch(() => ({}));
-    if (!r.ok || !data.ok) throw { error: data.error || "claude_error", detail: data.detail };
+    if (!r.ok || !data.ok) {
+      if (data.raw) console.warn("read failed", data.error, data.detail, data.raw);
+      throw { error: data.error || "claude_error", detail: [data.detail, data.status].filter(Boolean).join(" ") };
+    }
     return data.result;
   }
   async function photoThumb(job) {
