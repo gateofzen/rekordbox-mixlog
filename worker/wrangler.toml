@@ -4,7 +4,7 @@ compatibility_date = "2026-06-01"
 
 [vars]
 # Google Cloud の OAuth クライアントID（ウェブアプリ）
-GOOGLE_CLIENT_ID = "xxxxxxxx.apps.googleusercontent.com"
+GOOGLE_CLIENT_ID = "1006179763774-caosgokql13hh0j184rmontmfq0u4bbi.apps.googleusercontent.com"
 # 使ってよいGoogleアカウント（カンマ区切り）
 ALLOWED_EMAILS = "gateofzen@gmail.com"
 # アプリを置くオリジン（ローカル確認用を足すならカンマ区切り）
