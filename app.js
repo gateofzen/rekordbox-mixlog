@@ -394,7 +394,7 @@
         to: pick(decks[fromDeck === 1 ? 2 : 1], fromDeck === 1 ? 2 : 1),
         playingBpm: String(r.playing_bpm || ""),
         faders: [num(d1.fader), num(d2.fader)],
-        confidence: ["high", "medium", "low"].includes(r.confidence) ? r.confidence : "medium",
+        confidence: ["high", "medium", "low"].includes(String(r.confidence).toLowerCase()) ? String(r.confidence).toLowerCase() : "medium",
         reason: String(r.reason || ""),
       };
       job.state = "done";

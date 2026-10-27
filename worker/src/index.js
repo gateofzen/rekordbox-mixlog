@@ -19,7 +19,7 @@ Decide the order from the CHANNEL FADERS: the two vertical faders in the center 
 - The deck whose fader is DOWN is the track mixed OUT of (the "from" track, played first).
 - If both faders look equally up, use the horizontal crossfader and which deck is MASTER as secondary clues, and lower your confidence.
 
-Record your reading with the record_mix tool. Use empty strings for anything unreadable. "reason" is one short sentence in Japanese explaining the fader judgement.`;
+Reply in the required JSON format. Use empty strings for anything unreadable. "reason" is one short sentence in Japanese explaining the fader judgement.`;
 
 const deckSchema = {
   type: "object",
@@ -30,11 +30,9 @@ const deckSchema = {
     fader: { type: "number", description: "channel fader cap position, 0 = bottom, 1 = top" },
   },
   required: ["title", "artist", "bpm", "key", "fader"],
+  additionalProperties: false,
 };
-const READ_TOOL = {
-  name: "record_mix",
-  description: "Record what the rekordbox screen shows and which deck was mixed out of and into.",
-  input_schema: {
+const READ_SCHEMA = {
     type: "object",
     properties: {
       deck1: deckSchema,
@@ -46,7 +44,7 @@ const READ_TOOL = {
       reason: { type: "string" },
     },
     required: ["deck1", "deck2", "playing_bpm", "from_deck", "to_deck", "confidence", "reason"],
-  },
+    additionalProperties: false,
 };
 
 const tokenCache = new Map(); // token -> expiry ms (verified)
@@ -112,8 +110,7 @@ export default {
           body: JSON.stringify({
             model: env.MODEL || "claude-sonnet-5-5",
             max_tokens: 2048,
-            tools: [READ_TOOL],
-            tool_choice: { type: "tool", name: READ_TOOL.name },
+            output_config: { format: { type: "json_schema", schema: READ_SCHEMA } },
             messages: [{
               role: "user",
               content: [
@@ -125,11 +122,10 @@ export default {
         });
         const out = await res.json().catch(() => ({}));
         if (!res.ok) return json({ error: "claude_error", status: res.status, detail: out?.error?.message || "" }, 502);
-        const call = (out.content || []).find(c => c.type === "tool_use" && c.name === READ_TOOL.name);
         const text = (out.content || []).filter(c => c.type === "text").map(c => c.text).join("");
-        const parsed = call?.input && typeof call.input === "object" ? call.input : parseJson(text);
+        const parsed = parseJson(text);
         if (!parsed || !parsed.deck1 || !parsed.deck2)
-          return json({ error: "invalid_json", detail: `stop_reason=${out.stop_reason || "?"}`, raw: (text || JSON.stringify(call?.input || "")).slice(0, 2000) }, 502);
+          return json({ error: "invalid_json", detail: `stop_reason=${out.stop_reason || "?"}`, raw: text.slice(0, 2000) }, 502);
         return json({ ok: true, result: parsed });
       }
 
